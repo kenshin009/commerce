@@ -1,14 +1,20 @@
 from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.decorators import login_required
 from django.db import IntegrityError
-from django.http import HttpResponse, HttpResponseRedirect
-from django.shortcuts import render
+from django.http import HttpResponseRedirect
+from django.shortcuts import render,redirect
 from django.urls import reverse
 
-from .models import User
+from .models import *
 
 
 def index(request):
-    return render(request, "auctions/index.html")
+
+    active_listings = AuctionListings.objects.all()
+
+    return render(request, "auctions/index.html",{
+        'active_listings': active_listings
+    })
 
 
 def login_view(request):
@@ -61,3 +67,45 @@ def register(request):
         return HttpResponseRedirect(reverse("index"))
     else:
         return render(request, "auctions/register.html")
+
+
+def create_listing(request,user_id):
+
+    if request.method == 'POST':
+        
+        title = request.POST['title']
+        category = request.POST['category']
+        description = request.POST['description']
+        starting_bid = request.POST['starting_bid']
+        image = request.FILES.get('image')
+        lister = User.objects.get(id=user_id)
+        listing = AuctionListings.objects.create(title=title,category=category,description=description,
+                        starting_bid=starting_bid,image=image,lister=lister)
+        return redirect('index')
+
+    return render(request,'auctions/create_listing.html')
+
+def listing_detail(request,pk):
+
+    listing = AuctionListings.objects.get(pk=pk)
+    return render(request,'auctions/listing_detail.html',{
+        'listing': listing
+    })
+
+def categories(request):
+
+    categories = Category.objects.all()
+
+    return render(request,'auctions/categories.html',{
+        'categories':categories
+    })
+
+def category_detail(request,pk):
+
+    category = Category.objects.get(id=pk)
+    listings = category.auctionlistings_set.all()
+
+    return render(request,'auctions/category_detail.html',{
+        'category': category,
+        'listings': listings
+    })
