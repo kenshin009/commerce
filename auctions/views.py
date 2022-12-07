@@ -74,12 +74,12 @@ def create_listing(request,user_id):
     if request.method == 'POST':
         
         title = request.POST['title']
-        category = request.POST['category']
+        cat_obj = Category.objects.get_or_create(title=request.POST['category']) 
         description = request.POST['description']
         starting_bid = request.POST['starting_bid']
         image = request.FILES.get('image')
         lister = User.objects.get(id=user_id)
-        listing = AuctionListings.objects.create(title=title,category=category,description=description,
+        listing = AuctionListings.objects.create(title=title,category=cat_obj[0],description=description,
                         starting_bid=starting_bid,image=image,lister=lister)
         return redirect('index')
 

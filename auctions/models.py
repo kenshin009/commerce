@@ -36,7 +36,7 @@ class Bid(models.Model):
     auction_close = models.BooleanField(default=False)
 
     def __str__(self):
-        return self.id
+        return self.user.username
 
 class Comment(models.Model):
 
@@ -45,5 +45,5 @@ class Comment(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return self.id
+        return self.user.username
     
