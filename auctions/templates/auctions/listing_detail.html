@@ -9,12 +9,46 @@
                  <img src="{{ listing.image.url }}" alt="{{ listing.image }}" style="width: 18rem;">
             </div>
             <div class="col-12 col-lg-4">
-                <h2>{{ listing.title }}</h2><br>
-                <p ><strong>Price: </strong>{{listing.starting_bid }} $</p>
+                <h2>{{ listing.title }}</h2>
+                <hr>
+                <form method="post" action="{% url 'place_bid' listing.id %}">
+                    {% csrf_token %}
+                    <div class="container">
+                        <div class="row">
+                            <div class="col-lg-6">
+                                <div class="form-group">
+                                    <p>Starting Bid: <strong class="h3 ml-2">{{listing.starting_bid }} $</strong> </p> 
+                                    <input type="number" name="bid" class="form-control" placeholder="Bid Amount">
+                                    {% if bid %}
+                                    <small class="form-text text-muted">Enter {{bid.bid_price}} $ or more</small><br>
+                                    <span>Highest bid: <strong> {{bid.bid_price}} $</strong></span>
+                                    <span class="">Highest bidder: <strong> {{ bid.user }}</strong></span>
+                                    {% endif %}
+                                </div>
+                                
+                            </div>
+                                
+                            <div class="col-lg-6 pl-5">
+                                <small>0 bid</small><br>
+                                <button type="submit" class="btn btn-primary mb-2">Place Bid</button> 
+                                <!-- <a href="#" type="button" class="btn btn-outline-secondary mb-2">Add to Watchlist</a>   -->
+                               
+                            </div>
+                            {% if message %}
+                                <p class="text-danger">{{message}}</p>
+                            {% endif %}
+                        </div>
+                    </div> 
+                  
+                </form>       
+                   
+                <hr>
                 <p><strong>Category: </strong>{{listing.category }}</p>
                 <p><strong>Description: </strong>{{listing.description }}</p>
+                <hr>
                 <p><strong>Creted at: </strong>{{listing.created_at }}</p>
                 <p><strong>Listed by: </strong>{{listing.lister }}</p>
+            
 
             </div>
         </div>

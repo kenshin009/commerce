@@ -109,3 +109,33 @@ def category_detail(request,pk):
         'category': category,
         'listings': listings
     })
+
+@login_required
+def place_bid(request,pk):
+
+    user = User.objects.get(id=request.user.id)
+    listing = AuctionListings.objects.get(id=pk)
+    print(user,listing)
+    if request.method == 'POST':
+        bid_price = request.POST.get('bid')
+        print(bid_price)
+        print(listing.highest_bid)
+        if listing.highest_bid == 0 and int(bid_price) >= int(listing.starting_bid):
+            listing.highest_bid = bid_price
+            print('success')
+            listing.save()
+            bid = Bid.objects.create(bid_price=bid_price,user=user)
+        elif listing.highest_bid != 0 and int(bid_price) >= int(listing.highest_bid):
+            print(bid_price-listing.highest_bid)
+            listing.highest_bid = bid_price
+            listing.save()
+            bid = Bid.objects.create(bid_price=bid_price,user=user)
+        else:
+            message = 'Error: Please type a number equal or greater than the highest price.'
+            print(message)
+            return render(request,'auctions/listing_detail.html',{'listing':listing,'message': message})
+        
+    return render(request,'auctions/listing_detail.html',{
+        'bid': bid,
+        'listing': listing
+    })
