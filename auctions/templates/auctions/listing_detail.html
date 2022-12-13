@@ -18,11 +18,12 @@
                             <div class="col-lg-6">
                                 <div class="form-group">
                                     <p>Starting Bid: <strong class="h3 ml-2">{{listing.starting_bid }} $</strong> </p> 
-                                    <input type="number" name="bid" class="form-control" placeholder="Bid Amount">
-                                    {% if bid %}
-                                    <small class="form-text text-muted">Enter {{bid.bid_price}} $ or more</small><br>
-                                    <span>Highest bid: <strong> {{bid.bid_price}} $</strong></span>
-                                    <span class="">Highest bidder: <strong> {{ bid.user }}</strong></span>
+                                    <input type="number" name="bid" class="form-control" placeholder="Bid Amount">                                 
+                                    <small class="form-text text-muted">Enter {{listing.highest_bid}} $ or more</small><br>
+                                    <p>Highest bid: <strong> {{listing.highest_bid}} $</strong></p>
+                                    {% if highest_bidder %}
+                                    <p class="">Highest bidder: <strong> {{highest_bidder.user }}</strong></p>
+                                
                                     {% endif %}
                                 </div>
                                 
@@ -31,11 +32,18 @@
                             <div class="col-lg-6 pl-5">
                                 <small>0 bid</small><br>
                                 <button type="submit" class="btn btn-primary mb-2">Place Bid</button> 
-                                <!-- <a href="#" type="button" class="btn btn-outline-secondary mb-2">Add to Watchlist</a>   -->
-                               
+                                {% if watchlist %}
+                                <a href="{% url 'add_to_watchlist' listing.id %}" type="button" class="btn btn-outline-danger mb-2">
+                                    Remove from Watchlist
+                                </a>  
+                                {% else %}
+                                <a href="{% url 'add_to_watchlist' listing.id %}" type="button" class="btn btn-outline-secondary mb-2">
+                                    Add to Watchlist
+                                </a>  
+                                {% endif %}
                             </div>
-                            {% if message %}
-                                <p class="text-danger">{{message}}</p>
+                            {% if error %}
+                                <p class="text-danger">{{error}}</p>
                             {% endif %}
                         </div>
                     </div> 

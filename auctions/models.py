@@ -23,6 +23,7 @@ class AuctionListings(models.Model):
     image = models.ImageField(upload_to='items')
     created_at = models.DateTimeField(auto_now_add=True)
     lister = models.ForeignKey(User,on_delete=models.CASCADE,default=None)
+    auction_close = models.BooleanField(default=False)
 
     def __str__(self):
         return self.title
@@ -33,7 +34,7 @@ class Bid(models.Model):
     bid_price = models.PositiveIntegerField(default=0)
     user = models.ForeignKey(User,on_delete=models.CASCADE,default='')
     created_at = models.DateTimeField(auto_now_add=True)
-    auction_close = models.BooleanField(default=False)
+    
 
     def __str__(self):
         return self.user.username
@@ -47,3 +48,14 @@ class Comment(models.Model):
     def __str__(self):
         return self.user.username
     
+class Highest_bidder(models.Model):
+
+    user = models.ForeignKey(User,on_delete=models.CASCADE,default='')
+
+class Watchlist(models.Model):
+
+    user = models.ForeignKey(User,on_delete=models.CASCADE,default='')
+    title = models.CharField(max_length=100,default='')
+    category = models.ForeignKey(Category,on_delete=models.CASCADE,default=None)
+    starting_bid = models.PositiveIntegerField(default=0)
+    image = models.ImageField(upload_to='items',blank=True,null=True)

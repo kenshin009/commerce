@@ -88,8 +88,16 @@ def create_listing(request,user_id):
 def listing_detail(request,pk):
 
     listing = AuctionListings.objects.get(pk=pk)
+    highest_bidder = Highest_bidder.objects.get(user=request.user)
+    try:
+        watchlist = Watchlist.objects.get(title=listing.title)
+    except Watchlist.DoesNotExist:
+        watchlist = None
+
     return render(request,'auctions/listing_detail.html',{
-        'listing': listing
+        'watchlist': watchlist,
+        'listing': listing,
+        'highest_bidder': highest_bidder
     })
 
 def categories(request):
@@ -125,17 +133,71 @@ def place_bid(request,pk):
             print('success')
             listing.save()
             bid = Bid.objects.create(bid_price=bid_price,user=user)
+            highest_bidder = Highest_bidder.objects.create(user=bid.user)
+
         elif listing.highest_bid != 0 and int(bid_price) >= int(listing.highest_bid):
             print(bid_price-listing.highest_bid)
             listing.highest_bid = bid_price
             listing.save()
             bid = Bid.objects.create(bid_price=bid_price,user=user)
+            highest_bidder = Highest_bidder.objects.create(user=bid.user)
         else:
-            message = 'Error: Please type a number equal or greater than the highest price.'
-            print(message)
-            return render(request,'auctions/listing_detail.html',{'listing':listing,'message': message})
+            error = 'Error: Please type a number equal or greater than the highest price.'
+            return render(request,'auctions/listing_detail.html',{'listing':listing,'error': error})
         
     return render(request,'auctions/listing_detail.html',{
+        'highest_bidder': highest_bidder,
         'bid': bid,
         'listing': listing
+    })
+
+def watchlist(request):
+
+    watchlist_id = request.session.get('watchlist_id',None)
+    if watchlist_id:
+        watchlist = Watchlist.objects.all()
+
+    else:
+        watchlist = None
+        return render(request,'auctions/watchlist.html',{
+            'watchlist': watchlist
+        })
+    return render(request,'auctions/watchlist.html',{
+        'watchlist': watchlist,
+    })
+
+def add_to_watchlist(request,pk):
+
+   
+    listing = AuctionListings.objects.get(id=pk)
+    highest_bidder = Highest_bidder.objects.get(user=request.user)
+    #check if listing in watchlist already present or not
+    try:
+        watchlist = Watchlist.objects.get(title=listing.title)
+    except Watchlist.DoesNotExist:
+        watchlist = None
+
+    #if listing is not present in the watchlist
+    if watchlist is None:
+    
+        watchlist = Watchlist.objects.create(user=request.user,title=listing.title,category=listing.category,
+                            starting_bid=listing.starting_bid,image=listing.image)
+        request.session['watchlist_id'] = watchlist.id
+
+    #if listing is already present in the watchlist
+    else:
+       
+        watchlist.delete()
+        del request.session['watchlist_id']
+
+        return render(request,'auctions/listing_detail.html',{
+            'listing': listing,
+            'highest_bidder': highest_bidder
+        })
+
+
+    return render(request,'auctions/listing_detail.html',{
+        'watchlist': watchlist,
+        'listing': listing,
+        'highest_bidder': highest_bidder
     })
