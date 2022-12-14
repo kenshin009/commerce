@@ -1,5 +1,6 @@
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
+from django.template.defaultfilters import slugify
 from django.db import IntegrityError
 from django.http import HttpResponseRedirect
 from django.shortcuts import render,redirect
@@ -74,20 +75,22 @@ def create_listing(request,user_id):
     if request.method == 'POST':
         
         title = request.POST['title']
+        slug = slugify(title)
         cat_obj = Category.objects.get_or_create(title=request.POST['category']) 
         description = request.POST['description']
         starting_bid = request.POST['starting_bid']
         image = request.FILES.get('image')
         lister = User.objects.get(id=user_id)
-        listing = AuctionListings.objects.create(title=title,category=cat_obj[0],description=description,
-                        starting_bid=starting_bid,image=image,lister=lister)
+        listing = AuctionListings.objects.create(title=title,slug=slug,category=cat_obj[0],description=description,
+                        starting_bid=starting_bid,highest_bid=starting_bid,image=image,lister=lister)
+        highest_bidder = Highest_bidder.objects.create(user=lister)
         return redirect('index')
 
     return render(request,'auctions/create_listing.html')
 
-def listing_detail(request,pk):
+def listing_detail(request,slug):
 
-    listing = AuctionListings.objects.get(pk=pk)
+    listing = AuctionListings.objects.get(slug=slug)
     highest_bidder = Highest_bidder.objects.get(user=request.user)
     try:
         watchlist = Watchlist.objects.get(title=listing.title)
@@ -166,10 +169,10 @@ def watchlist(request):
         'watchlist': watchlist,
     })
 
-def add_to_watchlist(request,pk):
+def manage_watchlist(request,slug):
 
    
-    listing = AuctionListings.objects.get(id=pk)
+    listing = AuctionListings.objects.get(slug=slug)
     highest_bidder = Highest_bidder.objects.get(user=request.user)
     #check if listing in watchlist already present or not
     try:
@@ -180,7 +183,7 @@ def add_to_watchlist(request,pk):
     #if listing is not present in the watchlist
     if watchlist is None:
     
-        watchlist = Watchlist.objects.create(user=request.user,title=listing.title,category=listing.category,
+        watchlist = Watchlist.objects.create(user=request.user,title=listing.title,slug=listing.slug,category=listing.category,
                             starting_bid=listing.starting_bid,image=listing.image)
         request.session['watchlist_id'] = watchlist.id
 

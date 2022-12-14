@@ -33,11 +33,11 @@
                                 <small>0 bid</small><br>
                                 <button type="submit" class="btn btn-primary mb-2">Place Bid</button> 
                                 {% if watchlist %}
-                                <a href="{% url 'add_to_watchlist' listing.id %}" type="button" class="btn btn-outline-danger mb-2">
+                                <a href="{% url 'manage_watchlist' listing.slug %}" type="button" class="btn btn-outline-danger mb-2">
                                     Remove from Watchlist
                                 </a>  
                                 {% else %}
-                                <a href="{% url 'add_to_watchlist' listing.id %}" type="button" class="btn btn-outline-secondary mb-2">
+                                <a href="{% url 'manage_watchlist' listing.slug %}" type="button" class="btn btn-outline-secondary mb-2">
                                     Add to Watchlist
                                 </a>  
                                 {% endif %}

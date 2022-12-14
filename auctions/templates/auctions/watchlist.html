@@ -14,7 +14,7 @@
                         <h4>{{ listing.title }}</h4>
                         <p class ='text-muted'><strong>Price: </strong>{{listing.starting_bid }} $</p>
                         <p>{{listing.category }}</p>
-                        <a href="{% url 'listing_detail' listing.id %}" type="button" class="btn btn-outline-secondary mb-2">Detail</a>
+                        <a href="{% url 'listing_detail' listing.slug %}" type="button" class="btn btn-outline-secondary mb-2">Detail</a>
                     </div>
                 </div>
             </div>
