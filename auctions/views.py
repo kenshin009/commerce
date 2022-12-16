@@ -91,16 +91,26 @@ def create_listing(request,user_id):
 def listing_detail(request,slug):
 
     listing = AuctionListings.objects.get(slug=slug)
-    highest_bidder = Highest_bidder.objects.get(user=request.user)
+    watchlist_id = request.session.get('watchlist_id',None)
     try:
-        watchlist = Watchlist.objects.get(title=listing.title)
+        watchlist = Watchlist.objects.filter(id=watchlist_id)
     except Watchlist.DoesNotExist:
         watchlist = None
+
+    if request.user == listing.lister:
+        highest_bidder = Highest_bidder.objects.all()
+        
+        return render(request,'auctions/listing_detail.html',{
+            'watchlist': watchlist,
+            'listing': listing,
+            'highest_bidder': highest_bidder
+        })
+    else:
+        pass
 
     return render(request,'auctions/listing_detail.html',{
         'watchlist': watchlist,
         'listing': listing,
-        'highest_bidder': highest_bidder
     })
 
 def categories(request):
@@ -126,26 +136,29 @@ def place_bid(request,pk):
 
     user = User.objects.get(id=request.user.id)
     listing = AuctionListings.objects.get(id=pk)
-    print(user,listing)
+
     if request.method == 'POST':
         bid_price = request.POST.get('bid')
-        print(bid_price)
-        print(listing.highest_bid)
-        if listing.highest_bid == 0 and int(bid_price) >= int(listing.starting_bid):
+
+        #check if no one has bidded yet and bid amount is greater than the base price
+        if listing.highest_bid == 0 and int(bid_price) > int(listing.starting_bid):
             listing.highest_bid = bid_price
-            print('success')
             listing.save()
             bid = Bid.objects.create(bid_price=bid_price,user=user)
             highest_bidder = Highest_bidder.objects.create(user=bid.user)
 
-        elif listing.highest_bid != 0 and int(bid_price) >= int(listing.highest_bid):
-            print(bid_price-listing.highest_bid)
+        #check if bid amount is not zero and greater than the base price
+        elif listing.highest_bid != 0 and int(bid_price) > int(listing.highest_bid):
             listing.highest_bid = bid_price
             listing.save()
             bid = Bid.objects.create(bid_price=bid_price,user=user)
             highest_bidder = Highest_bidder.objects.create(user=bid.user)
+            #makes the highest_bidder only one user
+            Highest_bidder.objects.delete(id= highest_bidder.id - 1)
+
         else:
             error = 'Error: Please type a number equal or greater than the highest price.'
+    
             return render(request,'auctions/listing_detail.html',{'listing':listing,'error': error})
         
     return render(request,'auctions/listing_detail.html',{
