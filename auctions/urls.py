@@ -3,6 +3,9 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
+    path('closed-listing-detail/<slug:slug>/',views.closed_listing_detail,name='closed_listing_detail'),
+    path('closed-listing/',views.closed_listing,name='closed_listing'),
+    path('close-auction/<slug:slug>/',views.close_auction,name='close_auction'),
     path('manage-watchlist/<slug:slug>/',views.manage_watchlist,name='manage_watchlist'),
     path('watchlist/',views.watchlist,name='watchlist'),
     path('place-bid/<int:pk>/',views.place_bid,name='place_bid'),

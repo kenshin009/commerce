@@ -90,20 +90,28 @@ def create_listing(request,user_id):
 
 def listing_detail(request,slug):
 
-    listing = AuctionListings.objects.get(slug=slug)
+    listing = AuctionListings.objects.get(slug=slug) 
+    #I called the user's own session
     watchlist_id = request.session.get('watchlist_id',None)
+
+    #then I access the user's specific watchlist items
+    #to check if there are any items in the watchlist
     try:
         watchlist = Watchlist.objects.filter(id=watchlist_id)
     except Watchlist.DoesNotExist:
         watchlist = None
 
+    #check if the user is the one who created the listing
     if request.user == listing.lister:
-        highest_bidder = Highest_bidder.objects.all()
-        
+        highest_bidder = Highest_bidder.objects.last()
+        #to give permission to close the auction
+        #I assign a variable to the boolean value
+        check = True 
         return render(request,'auctions/listing_detail.html',{
             'watchlist': watchlist,
             'listing': listing,
-            'highest_bidder': highest_bidder
+            'highest_bidder': highest_bidder,
+            'check': check
         })
     else:
         pass
@@ -154,18 +162,20 @@ def place_bid(request,pk):
             bid = Bid.objects.create(bid_price=bid_price,user=user)
             highest_bidder = Highest_bidder.objects.create(user=bid.user)
             #makes the highest_bidder only one user
-            Highest_bidder.objects.delete(id= highest_bidder.id - 1)
+            Highest_bidder.objects.get(id= highest_bidder.id - 1).delete()
 
         else:
-            error = 'Error: Please type a number equal or greater than the highest price.'
+            error = 'Error: Please type a number greater than the highest price.'
     
             return render(request,'auctions/listing_detail.html',{'listing':listing,'error': error})
         
-    return render(request,'auctions/listing_detail.html',{
-        'highest_bidder': highest_bidder,
-        'bid': bid,
-        'listing': listing
-    })
+        return render(request,'auctions/listing_detail.html',{
+            'highest_bidder': highest_bidder,
+            'bid': bid,
+            'listing': listing
+        })
+        
+    return redirect(reverse('listing_detail',args=(listing.slug,)))
 
 def watchlist(request):
 
@@ -216,4 +226,66 @@ def manage_watchlist(request,slug):
         'watchlist': watchlist,
         'listing': listing,
         'highest_bidder': highest_bidder
+    })
+
+def closed_listing(request):
+
+    closed_listings = ClosedListing.objects.all()
+
+    return render(request,'auctions/closed_listing.html',{
+        'closed_listings': closed_listings
+    })
+
+def close_auction(request,slug):
+
+    listing = AuctionListings.objects.get(slug=slug)
+    closed_listing = ClosedListing.objects.create(title=listing.title,slug=listing.slug,
+                        highest_bid=listing.highest_bid,image=listing.image,lister=listing.lister)
+    listing.delete()
+    highest_bidder = Highest_bidder.objects.last()
+
+    return render(request,'auctions/closed_listing_detail.html',{
+        'closed_listing': closed_listing,
+        'highest_bidder': highest_bidder
+    })
+
+def closed_listing_detail(request,slug):
+
+    closed_listing = ClosedListing.objects.get(slug=slug)
+    try:
+        bidder = Bid.objects.get(id=request.user.id)
+        user = User.objects.get(id=request.user.id)
+    except Bid.DoesNotExist or User.DoesNotExist:
+        bidder = None
+        user = None
+
+    highest_bidder = Highest_bidder.objects.last()
+    #check if the user is the one who created the listing
+    if request.user == closed_listing.lister:  
+        message = 'The auction has been closed'
+
+    #check if the user is the highest bidder
+    elif request.user == highest_bidder.user:
+        message = 'Congratulations! You have won the auction!'
+
+    #check if the user is one of the bidders
+    elif bidder is not None:
+        if request.user == bidder.user:
+            message = 'Sorry. You have failed the auction. Good luck next time'
+    
+    #check if the user is one of the authenticatd users
+    elif user is not None:
+        if request.user == user:
+            message = 'The auction has been closed'
+
+    #if the user is anonymous user
+    else:
+        return render(request,'auctions/closed_listing_detail.html',{
+            'closed_listing': closed_listing
+        })
+
+    return render(request,'auctions/closed_listing_detail.html',{
+        'closed_listing':closed_listing,
+        'winner':highest_bidder,
+        'message':message
     })

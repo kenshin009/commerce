@@ -19,11 +19,10 @@
                                 <div class="form-group">
                                     <p>Starting Bid: <strong class="h3 ml-2">{{listing.starting_bid }} $</strong> </p> 
                                     <input type="number" name="bid" class="form-control" placeholder="Bid Amount">                                 
-                                    <small class="form-text text-muted">Enter {{listing.highest_bid}} $ or more</small><br>
+                                    <small class="form-text text-muted">Enter more than {{listing.highest_bid}}$</small><br>
                                     <p>Highest bid: <strong> {{listing.highest_bid}} $</strong></p>
                                     {% if highest_bidder %}
-                                    <p class="">Highest bidder: <strong> {{highest_bidder.user }}</strong></p>
-                                
+                                    <p>Highest bidder: <strong> {{ highest_bidder.user }}</strong></p>
                                     {% endif %}
                                 </div>
                                 
@@ -56,8 +55,11 @@
                 <hr>
                 <p><strong>Creted at: </strong>{{listing.created_at }}</p>
                 <p><strong>Listed by: </strong>{{listing.lister }}</p>
-            
-
+                {% if check %}
+                <a href="{% url 'close_auction' listing.slug %}" type="button" class="btn btn-outline-danger mb-2">
+                    Close Auction
+                </a> 
+                {% endif %}
             </div>
         </div>
     </div>

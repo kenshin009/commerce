@@ -24,7 +24,6 @@ class AuctionListings(models.Model):
     image = models.ImageField(upload_to='items')
     created_at = models.DateTimeField(auto_now_add=True)
     lister = models.ForeignKey(User,on_delete=models.CASCADE,default=None)
-    auction_close = models.BooleanField(default=False)
 
     def __str__(self):
         return self.title
@@ -61,3 +60,12 @@ class Watchlist(models.Model):
     category = models.ForeignKey(Category,on_delete=models.CASCADE,default=None)
     starting_bid = models.PositiveIntegerField(default=0)
     image = models.ImageField(upload_to='items',blank=True,null=True)
+
+class ClosedListing(models.Model):
+
+    title = models.CharField(max_length=100)
+    slug = models.SlugField(default='')
+    highest_bid = models.PositiveIntegerField(default=0)
+    image = models.ImageField(upload_to='items')
+    closed_at = models.DateTimeField(auto_now_add=True)
+    lister = models.ForeignKey(User,on_delete=models.CASCADE,default=None)

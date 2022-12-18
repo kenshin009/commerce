@@ -4,5 +4,5 @@ from .models import *
 # Register your models here.
 
 admin.site.register(User)
-admin.site.register(AuctionListings)
+admin.site.register([AuctionListings,ClosedListing])
 admin.site.register([Category,Bid,Comment,Highest_bidder,Watchlist])
