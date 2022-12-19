@@ -3,6 +3,7 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
+    path('comment/<slug:slug>/',views.comment,name='comment'),
     path('closed-listing-detail/<slug:slug>/',views.closed_listing_detail,name='closed_listing_detail'),
     path('closed-listing/',views.closed_listing,name='closed_listing'),
     path('close-auction/<slug:slug>/',views.close_auction,name='close_auction'),

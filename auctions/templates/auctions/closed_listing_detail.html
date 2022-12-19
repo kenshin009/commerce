@@ -15,10 +15,26 @@
                 <p class="h5 text-primary text-uppercase">{{ message }}</p>
 
                 {% if winner %}
-                <p class="lead text-primary mt-4 text-uppercase"><strong>{{ winner.user }}</strong> has won the auction at the price of 
+                <p class="mt-4 text-uppercase"><strong>{{ winner.user }}</strong> has won the auction at the price of 
                     <strong>{{ closed_listing.highest_bid }} $</strong>.</p>
                 {% endif %}
             </div>
+
+            <!-- <div class="col-12 col-lg-4">
+                <div>
+                   <form action="." method="post">
+                        <textarea class="form-control" name="comment" placeholder="Comment here.."></textarea>
+                        <button type="submit" class="btn btn-primary float-right mt-2">Post</button>
+                    </form> 
+                </div>
+                <br><br>
+                <div class="shadow bg-white rounded-lg mt-4 px-3 ">
+                    <span class="font-weight-bold">Kian</span>
+                    <p>Hello, nice to meet you all.</p>
+                </div>
+                    
+            </div> -->
+
         </div>
     </div>
 {% endblock %}
