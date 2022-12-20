@@ -83,7 +83,7 @@ def create_listing(request,user_id):
         lister = User.objects.get(id=user_id)
         listing = AuctionListings.objects.create(title=title,slug=slug,category=cat_obj[0],description=description,
                         starting_bid=starting_bid,highest_bid=starting_bid,image=image,lister=lister)
-        highest_bidder = Highest_bidder.objects.create(user=lister)
+        highest_bidder = Highest_bidder.objects.create(user=lister,listing_code=listing.slug)
         return redirect('index')
 
     return render(request,'auctions/create_listing.html')
@@ -94,18 +94,21 @@ def listing_detail(request,slug):
     listing = AuctionListings.objects.get(slug=slug) 
     #I called the user's own session
     watchlist_id = request.session.get('watchlist_id',None)
-    comments = Comment.objects.all()
+    comments = Comment.objects.filter(session_id=listing.id)
 
     #then I access the user's specific watchlist items
-    #to check if there are any items in the watchlist
+    #to check if this listing is present in the watchlist
     try:
-        watchlist = Watchlist.objects.filter(id=watchlist_id)
+        watchlist = Watchlist.objects.get(user=request.user,slug=listing.slug)
     except Watchlist.DoesNotExist:
         watchlist = None
 
     #check if the user is the one who created the listing
     if request.user == listing.lister:
-        highest_bidder = Highest_bidder.objects.last()
+        try:
+            highest_bidder = Highest_bidder.objects.get(listing_code=listing.slug)
+        except Highest_bidder.DoesNotExist:
+            highest_bidder = None
         #to give permission to close the auction
         #I assign a variable to the boolean value
         check = True 
@@ -149,35 +152,34 @@ def place_bid(request,pk):
 
     user = User.objects.get(id=request.user.id)
     listing = AuctionListings.objects.get(id=pk)
+    comments = Comment.objects.filter(session_id=listing.id)
 
     if request.method == 'POST':
         bid_price = request.POST.get('bid')
-
-        # #check if no one has bidded yet and bid amount is greater than the base price
-        # if listing.highest_bid == 0 and int(bid_price) > int(listing.starting_bid):
-        #     listing.highest_bid = bid_price
-        #     listing.save()
-        #     bid = Bid.objects.create(bid_price=bid_price,user=user)
-        #     highest_bidder = Highest_bidder.objects.create(user=bid.user)
 
         #check if bid amount is not zero and greater than the base price
         if int(bid_price) > int(listing.highest_bid):
             listing.highest_bid = bid_price
             listing.save()
             bid = Bid.objects.create(bid_price=bid_price,user=user)
-            highest_bidder = Highest_bidder.objects.create(user=bid.user)
+            highest_bidder = Highest_bidder.objects.create(user=bid.user,listing_code=listing.slug)
             #makes the highest_bidder only one user
-            Highest_bidder.objects.get(id= highest_bidder.id - 1).delete()
+            Highest_bidder.objects.first().delete()
 
         else:
             error = 'Error: Please type a number greater than the highest price.'
     
-            return render(request,'auctions/listing_detail.html',{'listing':listing,'error': error})
+            return render(request,'auctions/listing_detail.html',{
+                'listing':listing,
+                'error': error,
+                'comments': comments
+            })
         
         return render(request,'auctions/listing_detail.html',{
             'highest_bidder': highest_bidder,
             'bid': bid,
-            'listing': listing
+            'listing': listing,
+            'comments': comments
         })
         
     return redirect(reverse('listing_detail',args=(listing.slug,)))
@@ -185,24 +187,53 @@ def place_bid(request,pk):
 def watchlist(request):
 
     watchlist_id = request.session.get('watchlist_id',None)
-    if watchlist_id:
-        watchlist = Watchlist.objects.all()
+    #to check if any listings in watchlist are active or not
+    active_listings = []
+    closed_listings = []
+    #check whether this user's watchlist has any listing or not
+    try:
+        watchlists = Watchlist.objects.filter(user=request.user)
+    except Watchlist.DoesNotExist:
+        watchlists = None
 
-    else:
-        watchlist = None
-        return render(request,'auctions/watchlist.html',{
-            'watchlist': watchlist
+    #loop over listings in watchlists if watchlists is not None
+    listings = [a for a in watchlists if watchlists]
+    for listing in listings:
+        try:
+            active_listing = AuctionListings.objects.get(slug=listing.slug)
+            active_listings.append(active_listing)
+        except AuctionListings.DoesNotExist:
+            closed_listing = ClosedListing.objects.get(slug=listing.slug)
+            closed_listings.append(closed_listing)
+
+
+    if watchlist_id:
+        
+            return render(request,'auctions/watchlist.html',{
+            'watchlists': watchlists,
+            'watchlist_id': watchlist_id,
+            'closed_listings':closed_listings,
+            'active_listings': active_listings   
         })
-    return render(request,'auctions/watchlist.html',{
-        'watchlist': watchlist,
-    })
+    else:
+        return render(request,'auctions/watchlist.html',{
+            'watchlists': watchlists,
+    
+        })
+    # print(active_listings)
+    # return render(request,'auctions/watchlist.html',{
+    #     'watchlists': watchlists,
+    #     'watchlist_id': watchlist_id,
+    #     'closed_listings':closed_listings,
+    #     'active_listings': active_listings  
+    # })
 
 @login_required
 def manage_watchlist(request,slug):
 
    
     listing = AuctionListings.objects.get(slug=slug)
-    highest_bidder = Highest_bidder.objects.last()
+    highest_bidder = Highest_bidder.objects.get(listing_code=listing.slug)
     #check if listing in watchlist already present or not
     try:
         watchlist = Watchlist.objects.get(title=listing.title)
@@ -255,7 +286,7 @@ def closed_listing_detail(request,slug):
         bidder = None
         user = None
 
-    highest_bidder = Highest_bidder.objects.last()
+    highest_bidder = Highest_bidder.objects.get(listing_code=closed_listing.slug)
     #check if the user is the one who created the listing
     if request.user == closed_listing.lister:  
         message = 'The auction has been closed'
@@ -292,8 +323,8 @@ def comment(request,slug):
 
     if request.method == 'POST':
         cmt = request.POST.get('cmt')     
-        Comment.objects.create(user=request.user,comment=cmt)
-        comments = Comment.objects.all()
+        Comment.objects.create(session_id=listing.id,user=request.user,comment=cmt)
+        comments = Comment.objects.filter(session_id=listing.id)
         watchlist_id = request.session.get('watchlist_id',None)
 
         #then I access the user's specific watchlist items

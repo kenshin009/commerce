@@ -41,6 +41,7 @@ class Bid(models.Model):
 
 class Comment(models.Model):
 
+    session_id = models.PositiveIntegerField(default=0)
     user = models.ForeignKey(User,on_delete=models.CASCADE,default='')
     comment = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
@@ -51,6 +52,7 @@ class Comment(models.Model):
 class Highest_bidder(models.Model):
 
     user = models.ForeignKey(User,on_delete=models.CASCADE,default='')
+    listing_code = models.SlugField(default='')
 
 class Watchlist(models.Model):
 
