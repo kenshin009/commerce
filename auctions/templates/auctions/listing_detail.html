@@ -9,14 +9,85 @@
                  <img src="{{ listing.image.url }}" alt="{{ listing.image }}" style="width: 18rem;">
             </div>
             <div class="col-12 col-lg-4">
-                <h2>{{ listing.title }}</h2><br>
-                <p ><strong>Price: </strong>{{listing.starting_bid }} $</p>
+                <h2>{{ listing.title }}</h2>
+                <hr>
+                <form method="post" action="{% url 'place_bid' listing.id %}">
+                    {% csrf_token %}
+                    <div class="container">
+                        <div class="row">
+                            <div class="col-lg-6">
+                                <div class="form-group">
+                                    <p>Starting Bid: <strong class="h3 ml-2">{{listing.starting_bid }} $</strong> </p> 
+                                    <input type="number" name="bid" class="form-control" placeholder="Bid Amount">                                 
+                                    <small class="form-text text-muted">Enter more than {{listing.highest_bid}}$</small><br>
+                                    <p>Highest bid: <strong> {{listing.highest_bid}} $</strong></p>
+                                    {% if highest_bidder %}
+                                    <p>Highest bidder: <strong> {{ highest_bidder.user }}</strong></p>
+                                    {% endif %}
+                                </div>
+                                
+                            </div>
+                                
+                            <div class="col-lg-6 pl-5">
+                                <small>0 bid</small><br>
+                                <button type="submit" class="btn btn-primary mb-2">Place Bid</button> 
+                                {% if watchlist %}
+                                <a href="{% url 'manage_watchlist' listing.slug %}" type="button" class="btn btn-outline-danger mb-2">
+                                    Remove from Watchlist
+                                </a>  
+                                {% else %}
+                                <a href="{% url 'manage_watchlist' listing.slug %}" type="button" class="btn btn-outline-secondary mb-2">
+                                    Add to Watchlist
+                                </a>  
+                                {% endif %}
+                            </div>
+                            {% if error %}
+                                <p class="text-danger">{{error}}</p>
+                            {% endif %}
+                        </div>
+                    </div> 
+                  
+                </form>       
+                   
+                <hr>
                 <p><strong>Category: </strong>{{listing.category }}</p>
                 <p><strong>Description: </strong>{{listing.description }}</p>
+                <hr>
                 <p><strong>Creted at: </strong>{{listing.created_at }}</p>
                 <p><strong>Listed by: </strong>{{listing.lister }}</p>
 
+                {% if check %}
+                <a href="{% url 'close_auction' listing.slug %}" type="button" class="btn btn-outline-danger mb-2">
+                    Close Auction
+                </a> 
+                {% endif %}
             </div>
+
+            {% if user.is_authenticated %}
+            <div class="col-12 col-lg-4 shadow rounded bg-white p-3">
+                <div class="">
+                   <form action="{% url 'comment' listing.slug %}" method="post">
+                        {% csrf_token %}
+                        <textarea class="form-control" name="cmt" placeholder="Comment here.."></textarea>
+                        <button type="submit" class="btn btn-primary float-right mt-2">Post</button>
+                    </form> 
+                </div>
+                <br><br>
+                {% if comments %}
+                <div class="overflow-auto p-3 mt-2 bg-light" style="max-width: 60rem; max-height: 30rem;">
+                     {% for comment in comments %}
+                    <div class="shadow bg-white rounded-lg mt-4 px-3 ">
+                        <span class="font-weight-bold">{{ comment.user }}</span>
+                        <span class="text-muted">{{ comment.created_at }}</span>
+                        <p>{{ comment.comment }}</p>
+                    </div>
+                    {% endfor %}
+                </div>
+                   
+                {% endif %}
+                    
+            </div>
+            {% endif %}
         </div>
     </div>
    

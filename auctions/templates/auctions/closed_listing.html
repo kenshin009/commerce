@@ -1,0 +1,42 @@
+{% extends "auctions/layout.html" %}
+{% block title %} Closed Listing {% endblock %}
+{% block body %}
+    <h2 class="display-4">Closed Listings</h2><br>
+
+   
+    {% if closed_listings %}
+    
+        <div class="container">
+            <div class="row">
+                {% for listing in closed_listings %}
+                <div class="col-12 col-lg-4 mb-5" >
+                    <div class="card" style="width: 18rem;">
+                        <a href="{% url 'closed_listing_detail' listing.slug %}" class="link-dark text-decoration-none">
+
+                        <img src="{{ listing.image.url }}" class="card-img-top " alt="{{ listing.image }}" style="height: 200px; object-fit:contain;">
+                    
+                        <div class="card-body mt-4">
+                            <h5 class="card-title">{{ listing.title }}</h5>
+                            <p class="card-text text-muted"><strong>Highest Bid: </strong>{{listing.highest_bid }} $</p>
+                            <p class="card-text"><strong>Closed at: </strong>{{ listing.closed_at }} </p>
+
+                        </div>
+                        </a>
+                       
+                    </div>
+                </div>
+                {% endfor %}
+        {% else %}
+        <h4>No listings</h4>
+            </div>
+        </div>
+              
+               
+    {% endif %}   
+              
+           
+
+
+
+
+{% endblock %}

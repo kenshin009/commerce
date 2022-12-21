@@ -1,0 +1,56 @@
+{% extends "auctions/layout.html" %}
+
+{% block body %}
+    <h2 class="display-4">Watchlist</h2><br>
+            {% if active_listings %}
+                {% for listing in active_listings %}
+                <div class="container">
+                    <div class="row">
+                        <div class="col-6 col-lg-4">
+                            <img src="{{ listing.image.url }}" class="card-img-top " alt="{{ listing.image }}" style="height: 200px; object-fit:contain;">
+                        </div>
+                        <div class="col-6 col-lg-8">
+                            <h4>{{ listing.title }}</h4>
+                            <p class ='text-muted'><strong>Price: </strong>{{listing.starting_bid }} $</p>
+                            <p>{{listing.category }}</p>
+                            <a 
+                            href="{% url 'listing_detail' listing.slug %}"
+                            type="button" class="btn btn-outline-secondary mb-2">Detail</a>
+                            <a href="{% url 'manage_watchlist' listing.slug %}" type="button" class="btn btn-outline-danger mb-2">
+                                Remove
+                            </a> 
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% endif %}
+
+        {% if closed_listings %}
+                {% for listing in closed_listings %}
+                <div class="container">
+                    <div class="row">
+                        <div class="col-6 col-lg-4">
+                            <img src="{{ listing.image.url }}" class="card-img-top " alt="{{ listing.image }}" style="height: 200px; object-fit:contain;">
+                        </div>
+                        <div class="col-6 col-lg-8">
+                            <h4>{{ listing.title }}</h4>
+                            <p class ='text-muted'><strong>Highest Bid: </strong>{{listing.highest_bid }} $</p>
+                            <p><strong>This listing has been closed.</strong> </p>
+                            <a 
+                            href="{% url 'closed_listing_detail' listing.slug %}"
+                            type="button" class="btn btn-outline-secondary mb-2">Check here</a>
+                            <a href="{% url 'manage_watchlist' listing.slug %}" type="button" class="btn btn-outline-danger mb-2">
+                                Remove
+                            </a> 
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+        {% endif %}
+
+        {% if not watchlists %}
+                <p class="h5 text-secondary">Nothing in your watchlist. Wanna add something?</p>
+                <a href="{% url 'index' %}" class="btn btn-outline-secondary mt-2"> Click here.</a>
+        {% endif %}
+{% endblock %}
+              

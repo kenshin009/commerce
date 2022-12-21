@@ -1,0 +1,25 @@
+{% extends "auctions/layout.html" %}
+
+{% block title %}{{ closed_listing.title }}{% endblock %}
+{% block body %}
+    <div class="container">
+        <div class="row">
+
+            <div class="col-12 col-lg-4">
+                 <img src="{{ closed_listing.image.url }}" alt="{{ closed_listing.image }}" style="width: 18rem;">
+            </div>
+            <div class="col-12 col-lg-4">
+                <h2>{{ closed_listing.title }}</h2><br>
+                <p class="lead">Higest Bid: <strong>{{ closed_listing.highest_bid }}$</strong></p>
+                <p class="lead">Closed at: <strong>{{ closed_listing.closed_at }}</strong></p>
+                <p class="h5 text-primary text-uppercase">{{ message }}</p>
+
+                {% if winner %}
+                <p class="mt-4 text-uppercase"><strong>{{ winner.user }}</strong> has won the auction at the price of 
+                    <strong>{{ closed_listing.highest_bid }} $</strong>.</p>
+                {% endif %}
+            </div>
+
+        </div>
+    </div>
+{% endblock %}
