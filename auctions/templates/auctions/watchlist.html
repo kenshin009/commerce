@@ -16,12 +16,15 @@
                             <a 
                             href="{% url 'listing_detail' listing.slug %}"
                             type="button" class="btn btn-outline-secondary mb-2">Detail</a>
+                            <a href="{% url 'manage_watchlist' listing.slug %}" type="button" class="btn btn-outline-danger mb-2">
+                                Remove
+                            </a> 
                         </div>
                     </div>
                 </div>
                 {% endfor %}
             {% endif %}
-    <hr>
+
         {% if closed_listings %}
                 {% for listing in closed_listings %}
                 <div class="container">
@@ -36,10 +39,18 @@
                             <a 
                             href="{% url 'closed_listing_detail' listing.slug %}"
                             type="button" class="btn btn-outline-secondary mb-2">Check here</a>
+                            <a href="{% url 'manage_watchlist' listing.slug %}" type="button" class="btn btn-outline-danger mb-2">
+                                Remove
+                            </a> 
                         </div>
                     </div>
                 </div>
                 {% endfor %}
+        {% endif %}
+
+        {% if not watchlists %}
+                <p class="h5 text-secondary">Nothing in your watchlist. Wanna add something?</p>
+                <a href="{% url 'index' %}" class="btn btn-outline-secondary mt-2"> Click here.</a>
         {% endif %}
 {% endblock %}
               

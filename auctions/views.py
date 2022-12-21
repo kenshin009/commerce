@@ -72,29 +72,39 @@ def register(request):
 
 def create_listing(request,user_id):
 
+    categories = Category.objects.all()
+
     if request.method == 'POST':
         
         title = request.POST['title']
         slug = slugify(title)
-        cat_obj = Category.objects.get_or_create(title=request.POST['category']) 
+        category = Category.objects.get(title=request.POST['category'])
+        print(category)
         description = request.POST['description']
         starting_bid = request.POST['starting_bid']
         image = request.FILES.get('image')
         lister = User.objects.get(id=user_id)
-        listing = AuctionListings.objects.create(title=title,slug=slug,category=cat_obj[0],description=description,
+        listing = AuctionListings.objects.create(title=title,slug=slug,category=category,description=description,
                         starting_bid=starting_bid,highest_bid=starting_bid,image=image,lister=lister)
         highest_bidder = Highest_bidder.objects.create(user=lister,listing_code=listing.slug)
-        return redirect('index')
+        return redirect('index')    
 
-    return render(request,'auctions/create_listing.html')
+    return render(request,'auctions/create_listing.html',{'categories':categories})
 
 def listing_detail(request,slug):
 
 
     listing = AuctionListings.objects.get(slug=slug) 
-    #I called the user's own session
-    watchlist_id = request.session.get('watchlist_id',None)
+    #to get the comments of this listing
     comments = Comment.objects.filter(session_id=listing.id)
+    #to check the user is not anonymous user
+    try:
+        user = User.objects.get(id=request.user.id)
+    except User.DoesNotExist:
+        user = None
+    
+    if user is None:
+        return render(request,'auctions/listing_detail.html',{'listing':listing})
 
     #then I access the user's specific watchlist items
     #to check if this listing is present in the watchlist
@@ -120,6 +130,7 @@ def listing_detail(request,slug):
             'check': check,
             'comments': comments
         })
+
     else:
         pass
 
@@ -153,6 +164,11 @@ def place_bid(request,pk):
     user = User.objects.get(id=request.user.id)
     listing = AuctionListings.objects.get(id=pk)
     comments = Comment.objects.filter(session_id=listing.id)
+    #to check if this listing is present in the watchlist
+    try:
+        watchlist = Watchlist.objects.get(user=request.user,slug=listing.slug)
+    except Watchlist.DoesNotExist:
+        watchlist = None
 
     if request.method == 'POST':
         bid_price = request.POST.get('bid')
@@ -173,21 +189,22 @@ def place_bid(request,pk):
             return render(request,'auctions/listing_detail.html',{
                 'listing':listing,
                 'error': error,
-                'comments': comments
+                'comments': comments,
+                'watchlist': watchlist
             })
         
         return render(request,'auctions/listing_detail.html',{
             'highest_bidder': highest_bidder,
             'bid': bid,
             'listing': listing,
-            'comments': comments
+            'comments': comments,
+            'watchlist': watchlist
         })
         
     return redirect(reverse('listing_detail',args=(listing.slug,)))
 
 def watchlist(request):
 
-    watchlist_id = request.session.get('watchlist_id',None)
     #to check if any listings in watchlist are active or not
     active_listings = []
     closed_listings = []
@@ -208,11 +225,10 @@ def watchlist(request):
             closed_listings.append(closed_listing)
 
 
-    if watchlist_id:
+    if watchlists:
         
             return render(request,'auctions/watchlist.html',{
             'watchlists': watchlists,
-            'watchlist_id': watchlist_id,
             'closed_listings':closed_listings,
             'active_listings': active_listings   
         })
@@ -221,42 +237,31 @@ def watchlist(request):
             'watchlists': watchlists,
     
         })
-    # print(active_listings)
-    # return render(request,'auctions/watchlist.html',{
-    #     'watchlists': watchlists,
-    #     'watchlist_id': watchlist_id,
-    #     'closed_listings':closed_listings,
-    #     'active_listings': active_listings  
-    # })
 
 @login_required
 def manage_watchlist(request,slug):
-
-   
-    listing = AuctionListings.objects.get(slug=slug)
-    highest_bidder = Highest_bidder.objects.get(listing_code=listing.slug)
-    #check if listing in watchlist already present or not
     try:
-        watchlist = Watchlist.objects.get(title=listing.title)
+        listing = AuctionListings.objects.get(slug=slug)
+    except AuctionListings.DoesNotExist:
+        listing = ClosedListing.objects.get(slug=slug)
+    #check if listing in the user's watchlist already present or not
+    try:
+        watchlist = Watchlist.objects.get(user=request.user,slug=listing.slug)
     except Watchlist.DoesNotExist:
         watchlist = None
 
+    #if listing is present in the watchlist
+    if watchlist:
+        watchlist.delete()
+
     #if listing is not present in the watchlist
-    if watchlist is None:
-    
+    else:
         watchlist = Watchlist.objects.create(user=request.user,title=listing.title,slug=listing.slug,category=listing.category,
                             starting_bid=listing.starting_bid,image=listing.image)
-        request.session['watchlist_id'] = watchlist.id
+      
+        return redirect(reverse('watchlist'))
 
-    #if listing is already present in the watchlist
-    else:
-       
-        watchlist.delete()
-        del request.session['watchlist_id']
-
-        return redirect(reverse('listing_detail',args=(listing.slug,)))
-
-    return redirect(reverse('listing_detail',args=(listing.slug,)))
+    return redirect(reverse('watchlist'))
    
 
 def closed_listing(request):
@@ -277,40 +282,37 @@ def close_auction(request,slug):
 
     return redirect(reverse('closed_listing_detail',args=(closed_listing.slug,)))
 
+@login_required
 def closed_listing_detail(request,slug):
 
     closed_listing = ClosedListing.objects.get(slug=slug)
     try:
-        bidder = Bid.objects.get(id=request.user.id)
-        user = User.objects.get(id=request.user.id)
-    except Bid.DoesNotExist or User.DoesNotExist:
+        bidder = Bid.objects.filter(user=request.user)      
+    except Bid.DoesNotExist:
         bidder = None
-        user = None
 
     highest_bidder = Highest_bidder.objects.get(listing_code=closed_listing.slug)
     #check if the user is the one who created the listing
     if request.user == closed_listing.lister:  
-        message = 'The auction has been closed'
+        message = 'You have successfully closed the auction'
 
     #check if the user is the highest bidder
     elif request.user == highest_bidder.user:
         message = 'Congratulations! You have won the auction!'
 
     #check if the user is one of the bidders
-    elif bidder is not None:
-        if request.user == bidder.user:
-            message = 'Sorry. You have failed the auction. Good luck next time'
+  
+    elif bidder:
+        message = 'Sorry. You have failed the auction. Good luck next time'
     
-    #check if the user is one of the authenticatd users
-    elif user is not None:
-        if request.user == user:
-            message = 'The auction has been closed'
-
-    #if the user is anonymous user
     else:
+        message = 'This auction has been closed'
         return render(request,'auctions/closed_listing_detail.html',{
-            'closed_listing': closed_listing
-        })
+        'closed_listing':closed_listing,
+        'winner':highest_bidder,
+        'message': message
+    })
+    
 
     return render(request,'auctions/closed_listing_detail.html',{
         'closed_listing':closed_listing,
@@ -321,25 +323,21 @@ def closed_listing_detail(request,slug):
 def comment(request,slug):
 
     listing = AuctionListings.objects.get(slug=slug)    
-
+    highest_bidder = Highest_bidder.objects.get(listing_code=listing.slug)
     if request.method == 'POST':
         cmt = request.POST.get('cmt')     
         Comment.objects.create(session_id=listing.id,user=request.user,comment=cmt)
+        #to get the comments made on this listing
         comments = Comment.objects.filter(session_id=listing.id)
-        watchlist_id = request.session.get('watchlist_id',None)
 
-        #then I access the user's specific watchlist items
-        #to check if there are any items in the watchlist
+        #to check if there are any items in the user's watchlist
         try:
-            watchlist = Watchlist.objects.filter(id=watchlist_id)
-            user = User.objects.get(id=request.user.id)
+            watchlist = Watchlist.objects.get(user=request.user,slug=listing.slug)
         except Watchlist.DoesNotExist or User.DoesNotExist:
             watchlist = None
-            user = None
             
         #check if the user is the one who created the listing
         if request.user == listing.lister:
-            highest_bidder = Highest_bidder.objects.last()
             #to give permission to close the auction
             #I assign a variable to the boolean value
             check = True 
@@ -352,19 +350,21 @@ def comment(request,slug):
                 'comments': comments
             })
 
-        elif user is None:
-            return render(request,'auctions/listing_detail.html',{
-                'watchlist': watchlist,
-                'listing': listing
-            })
+        elif request.user == highest_bidder.user:
 
-        else:
-            highest_bidder = Highest_bidder.objects.last()
             return render(request,'auctions/listing_detail.html',{
                 'watchlist': watchlist,
                 'listing': listing,
                 'comments': comments,
                 'highest_bidder': highest_bidder
+            })
+
+        else:
+
+            return render(request,'auctions/listing_detail.html',{
+                'watchlist': watchlist,
+                'listing': listing,
+                'comments': comments
             })
 
     else:
