@@ -164,7 +164,8 @@ def place_bid(request,pk):
             bid = Bid.objects.create(bid_price=bid_price,user=user)
             highest_bidder = Highest_bidder.objects.create(user=bid.user,listing_code=listing.slug)
             #makes the highest_bidder only one user
-            Highest_bidder.objects.first().delete()
+            highest_bidders = Highest_bidder.objects.filter(listing_code=listing.slug)
+            highest_bidders.first().delete()
 
         else:
             error = 'Error: Please type a number greater than the highest price.'
