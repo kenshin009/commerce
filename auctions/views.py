@@ -149,13 +149,17 @@ def categories(request):
     })
 
 def category_detail(request,pk):
-
+    # Get the specific category
     category = Category.objects.get(id=pk)
+    # Get all listings of that category
     listings = category.auctionlistings_set.all()
+    # Get all categories
+    categories = Category.objects.all()
 
     return render(request,'auctions/category_detail.html',{
         'category': category,
-        'listings': listings
+        'listings': listings,
+        'categories': categories
     })
 
 @login_required
