@@ -2,31 +2,47 @@
 
 {% block title %} {{ category.title }} {% endblock %}
 {% block body %}
-    <h2 class="display-4">{{ category.title }}</h2><br>
-
-    {% if listings %}
+    <h2 class="display-4 text-center">{{ category.title }}</h2><br>
+    
+    
     <div class="container">
-        <div class="row">
-        {% for listing in listings %}
-            <div class="col-12 col-lg-4 mb-5" >
-                <div class="card" style="width: 18rem;">
-                    <a href="{% url 'listing_detail' listing.slug %}" class="link-dark text-decoration-none">
-
-                    <img src="{{ listing.image.url }}" class="card-img-top " alt="{{ listing.image }}" style="height: 200px; object-fit:contain;">
-                
-                    <div class="card-body mt-4">
-                        <h5 class="card-title">{{ listing.title }}</h5>
-                        <p class="card-text text-muted"><strong>Price: </strong>{{listing.starting_bid }} $</p>
-                        <p class="card-text">{{listing.description }}</p>
-                    </div>
-                    </a>
-                    
-                </div>
-            </div>
-        {% endfor %}
-    {% else %}
-        <h4 class="mt-5 text-info">No active listings</h4>
-    {% endif %}
+       <div class="row">
+        <div class="col-lg-2 border-right">
+            <ul class="nav flex-column">
+            {% for category in categories %}
+            <li class="nav-item">
+              <a class="nav-link active" href="{% url 'category_detail' category.id %}">{{ category.title }}</a>
+            </li>
+            {% endfor %}
+    </ul>
         </div>
+        <div class="col-lg-10">
+            <div class="row"> 
+            {% if listings %}
+            {% for listing in listings %}
+                <div class="col-12 col-lg-4 mb-5" >
+                    <div class="card" style="width: 18rem;">
+                        <a href="{% url 'listing_detail' listing.slug %}" class="link-dark text-decoration-none">
+
+                        <img src="{{ listing.image.url }}" class="card-img-top " alt="{{ listing.image }}" style="height: 200px; object-fit:contain;">
+                    
+                        <div class="card-body mt-4">
+                            <h5 class="card-title">{{ listing.title }}</h5>
+                            <p class="card-text text-muted"><strong>Price: </strong>{{listing.starting_bid }} $</p>
+                            <p class="card-text">{{listing.description }}</p>
+                        </div>
+                        </a>
+                        
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <h4 class="mt-5 text-info">No active listings</h4>
+        
+        {% endif %}
+            </div>
+        </div>
+       </div>
+        
     </div>
 {% endblock %}
