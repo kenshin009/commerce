@@ -1,3 +1,10 @@
 body {
     padding: 10px;
 }
+
+.nav-link[aria-control='page'] {
+    border-bottom: 1px dotted black;
+    border-left: 1px dotted black;
+    border-radius: 50%;
+    text-align: center;
+}

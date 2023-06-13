@@ -6,8 +6,12 @@
     {% for category in categories %}
         <ul class="nav">
             <li class="nav-item">
-                <a href="{% url 'category_detail' category.id %}" class="nav-link text-primary">{{ category.title }}</a>
+                <a href="{% url 'category_detail' category.id %}" class="nav-link active text-primary">{{ category.title }}</a>
             </li>
+           
         </ul>
+        
+        
     {% endfor %}
+    
 {% endblock %}
