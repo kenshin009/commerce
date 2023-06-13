@@ -2,6 +2,7 @@
 
 {% block title %} {{ category.title }} {% endblock %}
 {% block body %}
+
     <h2 class="display-4 text-center">{{ category.title }}</h2><br>
     
     
@@ -45,4 +46,14 @@
        </div>
         
     </div>
+    <script>
+        document.querySelectorAll('.nav-link').forEach(link => {
+          
+            if (link.href === window.location.href) {
+                link.setAttribute('aria-control','page')
+            }
+
+        })
+     
+    </script>
 {% endblock %}
